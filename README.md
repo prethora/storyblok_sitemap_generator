@@ -1,4 +1,4 @@
-# Storyblok Sitemap Generator
+# Storyblok Sitemap Generator (v1.0.2)
 
 ## Install
 
@@ -8,14 +8,14 @@ npm install
 
 ## Configure
 
-Rename the `.env-sample` file to `.env`, and configure it.
+To create a config file for a site, copy the `./config/example.com-sample.yaml` to a file called `./config/{siteID}.yml`, where `siteID` is an identifier for the site (e.g. the domain name). Configure the values (see the example file to understand the structure).
 
 ## Run
 
 ```bash
-npm run sitemap
+npm run sitemap "{siteID}"
 ```
 
 ## Output
 
-You'll find the outputted file at `out/sitemap.xml`.
+You'll find the outputted file at `out/{siteID}/sitemap.xml`.

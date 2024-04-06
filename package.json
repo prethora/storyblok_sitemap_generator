@@ -1,6 +1,6 @@
 {
   "name": "roaminteriordesign_sitemap_generator",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -13,6 +13,9 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.4.5",
+    "install": "^0.13.0",
+    "js-yaml": "^4.1.0",
+    "npm": "^10.5.1",
     "storyblok-js-client": "^6.7.1"
   }
 }

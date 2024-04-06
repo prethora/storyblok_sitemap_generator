@@ -1,0 +1,17 @@
+base_url: https://www.example.com
+access_token: (access token)
+timezone: -6
+defaults:
+  priority: 0.75
+  changefreq: weekly
+exceptions:
+  - path_name: /
+    priority: 1
+  - path_name: /experiences/
+    priority: 0.8
+  - path_name: /talent/
+    priority: 0.8
+  - path_name: /recognition/
+    priority: 0.8
+  - path_name: /privacy-policy
+    priority: 0.5

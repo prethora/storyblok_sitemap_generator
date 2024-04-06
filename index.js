@@ -1,35 +1,50 @@
-import "dotenv/config";
-import StoryblokClient from "storyblok-js-client"
-
+import { exitWithErrorMessage } from "./lib/misc.js";
 import { fileURLToPath } from 'url';
-import path, { dirname } from 'path';
+import { dirname } from 'path';
+import { loadConfig, validateConfig } from "./lib/config.js";
+import { safeReadFileSync } from "./lib/io.js";
+import { getStoryBlokEntries } from "./lib/storyblok.js";
 import { mkdirSync, writeFileSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const Storyblok = new StoryblokClient({
-    accessToken: process.env.STORYBLOK_ACCESS_TOKEN
-});
+const argv = process.argv.slice(2);
 
-let links = await Storyblok.getAll('cdn/links', {
-    version: 'published'
-});
+if (argv.length !== 1) exitWithErrorMessage("expecting a single argument (siteID)");
 
-let prefixUrl = process.env.SITE_BASE_URL;
-if (prefixUrl.endsWith("/")) prefixUrl = prefixUrl.substring(0, prefixUrl.length - 1);
+const siteID = argv[0];
 
-let sitemap_entries = links.map((link) => {
-    if (link.is_folder) return ''
-    return `\n    <url><loc>${prefixUrl}${link.real_path}</loc></url>`
-});
+const configFilePath = `${__dirname}/config/${siteID}.yaml`;
+const yamlContent = safeReadFileSync(configFilePath);
 
-let sitemap = `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    ${sitemap_entries.join('')}
-</urlset>`;
+if (yamlContent === null) exitWithErrorMessage(`config file for siteID '${siteID}' not found (./config/${siteID}.yaml)`);
 
-let outputDir = path.join(__dirname, "out");
-let outputFilePath = path.join(outputDir, "sitemap.xml");
+let config;
+try {
+    config = validateConfig(loadConfig(yamlContent));
+}
+catch (err) {
+    exitWithErrorMessage(err.message);
+}
 
-mkdirSync(outputDir, { recursive: true });
-writeFileSync(outputFilePath, sitemap);
+const lines = [];
+lines.push(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`);
+lines.push(...(await getStoryBlokEntries(config)).map(({ path, date, priority, changefreq }) => {
+    const lines = [];
+    lines.push(`    <url>`);
+    lines.push(`        <loc>${path}</loc>`);
+    lines.push(`        <priority>${priority}</priority>`);
+    lines.push(`        <changefreq>${changefreq}</changefreq>`);
+    lines.push(`        <lastmod>${date}</lastmod>`);
+    lines.push(`    </url>`);
+    return lines.join("\n");
+}));
+lines.push(`</urlset>\n`);
+const output = lines.join("\n");
+
+const outputDirPath = `${__dirname}/out/${siteID}`;
+const outputFilePath = `${outputDirPath}/sitemap.xml`;
+mkdirSync(outputDirPath, { recursive: true });
+writeFileSync(outputFilePath, output);
+console.log(`successfully created: ./out/${siteID}/sitemap.xml`);
